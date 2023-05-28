@@ -1,14 +1,14 @@
 {
   "files": {
-    "main.css": "/goit-react-hw-03-image-finder/static/css/main.5fc9d05f.css",
-    "main.js": "/goit-react-hw-03-image-finder/static/js/main.7867ca8a.js",
+    "main.css": "/goit-react-hw-03-image-finder/static/css/main.b3116ab1.css",
+    "main.js": "/goit-react-hw-03-image-finder/static/js/main.eac02bfd.js",
     "index.html": "/goit-react-hw-03-image-finder/index.html",
     "static/media/magnifying-glass-solid.svg": "/goit-react-hw-03-image-finder/static/media/magnifying-glass-solid.819dbf4f84c4cdd27213.svg",
-    "main.5fc9d05f.css.map": "/goit-react-hw-03-image-finder/static/css/main.5fc9d05f.css.map",
-    "main.7867ca8a.js.map": "/goit-react-hw-03-image-finder/static/js/main.7867ca8a.js.map"
+    "main.b3116ab1.css.map": "/goit-react-hw-03-image-finder/static/css/main.b3116ab1.css.map",
+    "main.eac02bfd.js.map": "/goit-react-hw-03-image-finder/static/js/main.eac02bfd.js.map"
   },
   "entrypoints": [
-    "static/css/main.5fc9d05f.css",
-    "static/js/main.7867ca8a.js"
+    "static/css/main.b3116ab1.css",
+    "static/js/main.eac02bfd.js"
   ]
 }
