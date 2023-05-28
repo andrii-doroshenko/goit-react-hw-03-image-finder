@@ -1,8 +1,20 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import CSS from './ImageGalleryItem.module.css';
-import Modal from '../../Modal/Modal';
+import Modal from '../Modal/Modal';
 
 class ImageGalleryItem extends Component {
+  static propTypes = {
+    props: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.number.isRequired,
+        webformatURL: PropTypes.string.isRequired,
+        tags: PropTypes.string.isRequired,
+        largeImageURL: PropTypes.string.isRequired,
+      })
+    ).isRequired,
+  };
+
   state = {
     selectedImage: null,
   };

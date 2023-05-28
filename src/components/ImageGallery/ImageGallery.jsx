@@ -1,4 +1,5 @@
 import { Component } from 'react';
+import PropTypes from 'prop-types';
 import CSS from './ImageGallery.module.css';
 import { ColorRing } from 'react-loader-spinner';
 import ImageGalleryItem from '../ImageGalleryItem/ImageGalleryItem';
@@ -7,6 +8,13 @@ import { ErrorMessage } from '../ErrorCard/ErrorCard';
 import { Button } from 'components/Button/Button';
 
 class ImageGallery extends Component {
+  static propTypes = {
+    queryValue: PropTypes.string.isRequired,
+    images: PropTypes.array.isRequired,
+    isLoading: PropTypes.bool.isRequired,
+    error: PropTypes.bool.isRequired,
+  };
+
   state = {
     images: [],
     page: 1,
