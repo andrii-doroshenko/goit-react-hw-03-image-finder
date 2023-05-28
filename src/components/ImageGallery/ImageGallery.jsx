@@ -4,25 +4,31 @@ import { ColorRing } from 'react-loader-spinner';
 import { ImageGalleryItem } from '../ImageGalleryItem/ImageGalleryItem';
 import { getPixabayQuery } from '../../services/getPixabay';
 import { ErrorMessage } from '../ErrorCard/ErrorCard';
+import { Button } from 'components/Button/Button';
 
 class ImageGallery extends Component {
   state = {
     images: [],
-    status: 'idle',
+    page: 1,
+    isLoading: false,
+    error: false,
   };
 
   async componentDidUpdate(prevProps, prevState) {
     if (prevProps.queryValue !== this.props.queryValue) {
-      this.setState({ status: 'pending' });
+      await this.setState({ isLoading: true, page: 1 });
 
-      const resp = await getPixabayQuery(this.props.queryValue);
+      const resp = await getPixabayQuery(
+        this.props.queryValue,
+        this.state.page
+      );
 
       if (!resp.ok) {
-        this.setState({ status: 'rejected' });
+        this.setState({ error: true });
       } else {
         const respJson = await resp.json();
         if (respJson.hits.length === 0) {
-          this.setState({ status: 'rejected' });
+          this.setState({ error: true });
         } else {
           const cards = respJson.hits.map(
             ({ id, webformatURL, largeImageURL, tags }) => ({
@@ -32,33 +38,56 @@ class ImageGallery extends Component {
               tags: tags,
             })
           );
-
-          this.setState({ images: cards, status: 'resolved' });
+          this.setState({ images: cards, isLoading: false });
         }
       }
     }
   }
 
-  render() {
-    const { images, status } = this.state;
+  loadMoreImages = async () => {
+    const { page } = this.state;
+    const nextPage = page + 1;
+    this.setState({ isLoading: true });
 
-    if (status === 'pending') {
-      return <ColorRing wrapperClass={CSS.blocksWrapper} />;
+    const resp = await getPixabayQuery(this.props.queryValue, nextPage);
+
+    if (resp.ok) {
+      const respJson = await resp.json();
+      if (respJson.hits.length > 0) {
+        const newCards = respJson.hits.map(
+          ({ id, webformatURL, largeImageURL, tags }) => ({
+            id: id,
+            webformatURL: webformatURL,
+            largeImageURL: largeImageURL,
+            tags: tags,
+          })
+        );
+        this.setState(prevState => ({
+          images: [...prevState.images, ...newCards],
+          page: nextPage,
+          isLoading: false,
+        }));
+      }
     }
+  };
 
-    if (status === 'resolved') {
-      return (
+  render() {
+    const { images, isLoading, error } = this.state;
+    return (
+      <>
+        {error && <ErrorMessage />}
+
         <ul className={CSS.gallery}>
           {images && <ImageGalleryItem props={images} />}
         </ul>
-      );
-    }
-
-    if (status === 'rejected') {
-      return <ErrorMessage />;
-    }
-
-    return null;
+        {isLoading && <ColorRing wrapperClass={CSS.blocksWrapper} />}
+        {images.length > 0 && (
+          <Button className={CSS.loadMore} onClick={this.loadMoreImages}>
+            Load More
+          </Button>
+        )}
+      </>
+    );
   }
 }
 
