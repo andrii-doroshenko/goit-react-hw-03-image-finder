@@ -1,7 +1,7 @@
 import { Component } from 'react';
 import CSS from './ImageGallery.module.css';
 import { ColorRing } from 'react-loader-spinner';
-import { ImageGalleryItem } from '../ImageGalleryItem/ImageGalleryItem';
+import ImageGalleryItem from '../ImageGalleryItem/ImageGalleryItem';
 import { getPixabayQuery } from '../../services/getPixabay';
 import { ErrorMessage } from '../ErrorCard/ErrorCard';
 import { Button } from 'components/Button/Button';
@@ -24,11 +24,11 @@ class ImageGallery extends Component {
       );
 
       if (!resp.ok) {
-        this.setState({ error: true });
+        this.setState({ error: true, images: [] });
       } else {
         const respJson = await resp.json();
         if (respJson.hits.length === 0) {
-          this.setState({ error: true });
+          this.setState({ error: true, isLoading: false, images: [] });
         } else {
           const cards = respJson.hits.map(
             ({ id, webformatURL, largeImageURL, tags }) => ({
@@ -38,7 +38,7 @@ class ImageGallery extends Component {
               tags: tags,
             })
           );
-          this.setState({ images: cards, isLoading: false });
+          this.setState({ images: cards, isLoading: false, error: false });
         }
       }
     }
@@ -49,17 +49,19 @@ class ImageGallery extends Component {
     const nextPage = page + 1;
     this.setState({ isLoading: true });
 
-    const resp = await getPixabayQuery(this.props.queryValue, nextPage);
-
-    if (resp.ok) {
+    try {
+      const resp = await getPixabayQuery(this.props.queryValue, nextPage);
       const respJson = await resp.json();
-      if (respJson.hits.length > 0) {
+
+      if (!resp.ok || respJson.hits.length === 0) {
+        this.setState({ error: true, isLoading: false, images: [] });
+      } else {
         const newCards = respJson.hits.map(
           ({ id, webformatURL, largeImageURL, tags }) => ({
-            id: id,
-            webformatURL: webformatURL,
-            largeImageURL: largeImageURL,
-            tags: tags,
+            id,
+            webformatURL,
+            largeImageURL,
+            tags,
           })
         );
         this.setState(prevState => ({
@@ -68,6 +70,9 @@ class ImageGallery extends Component {
           isLoading: false,
         }));
       }
+    } catch (error) {
+      console.error('Error:', error);
+      this.setState({ error: true, isLoading: false });
     }
   };
 
