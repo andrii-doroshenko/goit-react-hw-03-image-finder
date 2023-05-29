@@ -10,9 +10,6 @@ import { Button } from 'components/Button/Button';
 class ImageGallery extends Component {
   static propTypes = {
     queryValue: PropTypes.string.isRequired,
-    images: PropTypes.array.isRequired,
-    isLoading: PropTypes.bool.isRequired,
-    error: PropTypes.bool.isRequired,
   };
 
   state = {
@@ -23,13 +20,13 @@ class ImageGallery extends Component {
   };
 
   async componentDidUpdate(prevProps, prevState) {
-    if (prevProps.queryValue !== this.props.queryValue) {
-      await this.setState({ isLoading: true, page: 1 });
+    const { page } = this.state;
+    const { queryValue } = this.props;
 
-      const resp = await getPixabayQuery(
-        this.props.queryValue,
-        this.state.page
-      );
+    //Пошук по новому запиту
+    if (prevProps.queryValue !== queryValue) {
+      await this.setState({ isLoading: true, page: 1 });
+      const resp = await getPixabayQuery(queryValue, page);
 
       if (!resp.ok) {
         this.setState({ error: true, images: [] });
@@ -40,48 +37,82 @@ class ImageGallery extends Component {
         } else {
           const cards = respJson.hits.map(
             ({ id, webformatURL, largeImageURL, tags }) => ({
-              id: id,
-              webformatURL: webformatURL,
-              largeImageURL: largeImageURL,
-              tags: tags,
+              id,
+              webformatURL,
+              largeImageURL,
+              tags,
             })
           );
           this.setState({ images: cards, isLoading: false, error: false });
         }
       }
     }
+
+    //Пошук по LoadMore
+    if (prevState.page !== page) {
+      this.setState({ isLoading: true });
+
+      try {
+        const resp = await getPixabayQuery(queryValue, page);
+        const respJson = await resp.json();
+
+        if (!resp.ok || respJson.hits.length === 0) {
+          this.setState({ error: true, isLoading: false });
+        } else {
+          const newCards = respJson.hits.map(
+            ({ id, webformatURL, largeImageURL, tags }) => ({
+              id,
+              webformatURL,
+              largeImageURL,
+              tags,
+            })
+          );
+          this.setState(prevState => ({
+            images: [...prevState.images, ...newCards],
+            isLoading: false,
+          }));
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        this.setState({ error: true, isLoading: false });
+      }
+    }
   }
 
-  loadMoreImages = async () => {
-    const { page } = this.state;
-    const nextPage = page + 1;
-    this.setState({ isLoading: true });
+  // loadMoreImages = async () => {
+  //   const { page } = this.state;
+  //   const nextPage = page + 1;
+  //   this.setState({ isLoading: true });
 
-    try {
-      const resp = await getPixabayQuery(this.props.queryValue, nextPage);
-      const respJson = await resp.json();
+  //   try {
+  //     const resp = await getPixabayQuery(this.props.queryValue, nextPage);
+  //     const respJson = await resp.json();
 
-      if (!resp.ok || respJson.hits.length === 0) {
-        this.setState({ error: true, isLoading: false, images: [] });
-      } else {
-        const newCards = respJson.hits.map(
-          ({ id, webformatURL, largeImageURL, tags }) => ({
-            id,
-            webformatURL,
-            largeImageURL,
-            tags,
-          })
-        );
-        this.setState(prevState => ({
-          images: [...prevState.images, ...newCards],
-          page: nextPage,
-          isLoading: false,
-        }));
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      this.setState({ error: true, isLoading: false });
-    }
+  //     if (!resp.ok || respJson.hits.length === 0) {
+  //       this.setState({ error: true, isLoading: false, images: [] });
+  //     } else {
+  //       const newCards = respJson.hits.map(
+  //         ({ id, webformatURL, largeImageURL, tags }) => ({
+  //           id,
+  //           webformatURL,
+  //           largeImageURL,
+  //           tags,
+  //         })
+  //       );
+  //       this.setState(prevState => ({
+  //         images: [...prevState.images, ...newCards],
+  //         page: nextPage,
+  //         isLoading: false,
+  //       }));
+  //     }
+  //   } catch (error) {
+  //     console.error('Error:', error);
+  //     this.setState({ error: true, isLoading: false });
+  //   }
+  // };
+
+  loadMoreImages = () => {
+    this.setState(prevState => ({ page: prevState.page + 1 }));
   };
 
   render() {
