@@ -19,97 +19,43 @@ class ImageGallery extends Component {
     error: false,
   };
 
-  async componentDidUpdate(prevProps, prevState) {
-    const { page } = this.state;
-    const { queryValue } = this.props;
-
-    //Пошук по новому запиту
-    if (prevProps.queryValue !== queryValue) {
-      await this.setState({ isLoading: true, page: 1 });
-      const resp = await getPixabayQuery(queryValue, page);
-
-      if (!resp.ok) {
-        this.setState({ error: true, images: [] });
-      } else {
-        const respJson = await resp.json();
-        if (respJson.hits.length === 0) {
-          this.setState({ error: true, isLoading: false, images: [] });
-        } else {
-          const cards = respJson.hits.map(
-            ({ id, webformatURL, largeImageURL, tags }) => ({
-              id,
-              webformatURL,
-              largeImageURL,
-              tags,
-            })
-          );
-          this.setState({ images: cards, isLoading: false, error: false });
-        }
-      }
+  static getDerivedStateFromProps(nextProps, prevState) {
+    if (prevState.queryValue !== nextProps.queryValue) {
+      return { page: 1, queryValue: nextProps.queryValue };
     }
-
-    //Пошук по LoadMore
-    if (prevState.page !== page) {
-      this.setState({ isLoading: true });
-
-      try {
-        const resp = await getPixabayQuery(queryValue, page);
-        const respJson = await resp.json();
-
-        if (!resp.ok || respJson.hits.length === 0) {
-          this.setState({ error: true, isLoading: false });
-        } else {
-          const newCards = respJson.hits.map(
-            ({ id, webformatURL, largeImageURL, tags }) => ({
-              id,
-              webformatURL,
-              largeImageURL,
-              tags,
-            })
-          );
-          this.setState(prevState => ({
-            images: [...prevState.images, ...newCards],
-            isLoading: false,
-          }));
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        this.setState({ error: true, isLoading: false });
-      }
-    }
+    return null;
   }
 
-  // loadMoreImages = async () => {
-  //   const { page } = this.state;
-  //   const nextPage = page + 1;
-  //   this.setState({ isLoading: true });
+  componentDidUpdate(prevProps, prevState) {
+    const shouldComponentReset = prevProps.queryValue !== this.props.queryValue;
+    const shouldComponentAddNextPage = prevState.page !== this.state.page;
 
-  //   try {
-  //     const resp = await getPixabayQuery(this.props.queryValue, nextPage);
-  //     const respJson = await resp.json();
+    if (shouldComponentReset || shouldComponentAddNextPage) {
+      this.setState({ isLoading: true, error: false });
 
-  //     if (!resp.ok || respJson.hits.length === 0) {
-  //       this.setState({ error: true, isLoading: false, images: [] });
-  //     } else {
-  //       const newCards = respJson.hits.map(
-  //         ({ id, webformatURL, largeImageURL, tags }) => ({
-  //           id,
-  //           webformatURL,
-  //           largeImageURL,
-  //           tags,
-  //         })
-  //       );
-  //       this.setState(prevState => ({
-  //         images: [...prevState.images, ...newCards],
-  //         page: nextPage,
-  //         isLoading: false,
-  //       }));
-  //     }
-  //   } catch (error) {
-  //     console.error('Error:', error);
-  //     this.setState({ error: true, isLoading: false });
-  //   }
-  // };
+      getPixabayQuery(this.props.queryValue, this.state.page)
+        .then(resp => {
+          if (!resp.ok) {
+            throw new Error();
+          }
+          return resp.json();
+        })
+        .then(images => {
+          if (images.hits.length === 0) {
+            this.setState({ error: true });
+          }
+
+          this.setState(prevState => ({
+            images:
+              prevState.page === 1
+                ? images.hits
+                : [...prevState.images, ...images.hits],
+            isLoading: false,
+          }));
+        })
+        .catch(error => this.setState({ error: true }));
+    }
+  }
 
   loadMoreImages = () => {
     this.setState(prevState => ({ page: prevState.page + 1 }));
@@ -122,7 +68,7 @@ class ImageGallery extends Component {
         {error && <ErrorMessage />}
 
         <ul className={CSS.gallery}>
-          {images && <ImageGalleryItem props={images} />}
+          {images && <ImageGalleryItem items={images} />}
         </ul>
         {isLoading && <ColorRing wrapperClass={CSS.blocksWrapper} />}
         {images.length > 0 && (

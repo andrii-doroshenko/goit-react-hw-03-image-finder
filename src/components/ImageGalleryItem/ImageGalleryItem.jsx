@@ -5,7 +5,7 @@ import Modal from '../Modal/Modal';
 
 class ImageGalleryItem extends Component {
   static propTypes = {
-    props: PropTypes.arrayOf(
+    items: PropTypes.arrayOf(
       PropTypes.shape({
         id: PropTypes.number.isRequired,
         webformatURL: PropTypes.string.isRequired,
@@ -28,10 +28,10 @@ class ImageGalleryItem extends Component {
   };
 
   render() {
-    const { props } = this.props;
+    const { items } = this.props;
     const { selectedImage } = this.state;
 
-    const cards = props.map(({ id, webformatURL, tags, largeImageURL }) => {
+    const cards = items.map(({ id, webformatURL, tags, largeImageURL }) => {
       return (
         <li key={id} className={CSS.galleryItem}>
           <img
